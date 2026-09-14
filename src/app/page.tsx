@@ -22,6 +22,7 @@ async function getFeatured(): Promise<MenuItemDTO[]> {
   try {
     const items = await prisma.menuItem.findMany({
       where: { isPopular: true, isAvailable: true },
+      distinct: ["name"],
       take: 6,
       orderBy: { name: "asc" },
     });
