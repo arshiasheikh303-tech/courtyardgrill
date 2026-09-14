@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderType {
+  DELIVERY
+  PICKUP
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  PAY_ON_PICKUP
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  COMPLETED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  phone         String?
+  passwordHash  String
+  role          Role           @default(CUSTOMER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orders        Order[]
+  reservations  Reservation[]
+  addresses     Address[]
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  line1     String
+  city      String   @default("Lahore")
+  phone     String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model MenuCategory {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  order     Int        @default(0)
+  items     MenuItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  name        String
+  description String
+  price       Int
+  imageUrl    String?
+  isSpicy     Boolean      @default(false)
+  isVeg       Boolean      @default(false)
+  isPopular   Boolean      @default(false)
+  isAvailable Boolean      @default(true)
+  categoryId  String
+  category    MenuCategory @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  type            OrderType
+  address         String?
+  paymentMethod   PaymentMethod
+  status          OrderStatus   @default(PENDING)
+  notes           String?
+  subtotal        Int
+  deliveryFee     Int           @default(0)
+  total           Int
+  items           OrderItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  nameAtTime String
+  priceAtTime Int
+  quantity   Int
+}
+
+model Reservation {
+  id             String             @id @default(cuid())
+  userId         String?
+  user           User?              @relation(fields: [userId], references: [id])
+  name           String
+  phone          String
+  email          String?
+  date           DateTime
+  time           String
+  guests         Int
+  specialRequest String?
+  status         ReservationStatus  @default(PENDING)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  createdAt DateTime @default(now())
+}
